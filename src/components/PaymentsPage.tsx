@@ -1,10 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { format } from "date-fns";
 import { I18N } from "../constants/i18n";
 import { API_URL } from "../constants";
 import type { PaymentSearchResponse } from "../types/payment";
 import {
   Container,
+  FilterRow,
+  SearchButton,
+  SearchInput,
   Spinner,
   StatusBadge,
   Table,
@@ -20,8 +24,9 @@ import {
 
 const PAGE_SIZE = 5;
 
-async function fetchPayments(): Promise<PaymentSearchResponse> {
+async function fetchPayments(search: string): Promise<PaymentSearchResponse> {
   const params = new URLSearchParams({
+    search,
     page: "1",
     pageSize: PAGE_SIZE.toString(),
   });
@@ -38,14 +43,35 @@ async function fetchPayments(): Promise<PaymentSearchResponse> {
 }
 
 export const PaymentsPage = () => {
+  const [draftSearch, setDraftSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+
   const { data, isPending, isError } = useQuery({
-    queryKey: ["payments", { page: 1, pageSize: PAGE_SIZE }],
-    queryFn: fetchPayments,
+    queryKey: [
+      "payments",
+      { search: appliedSearch, page: 1, pageSize: PAGE_SIZE },
+    ],
+    queryFn: () => fetchPayments(appliedSearch),
   });
 
   return (
     <Container>
       <Title>{I18N.PAGE_TITLE}</Title>
+      <FilterRow>
+        <SearchInput
+          type="search"
+          aria-label={I18N.SEARCH_LABEL}
+          placeholder={I18N.SEARCH_PLACEHOLDER}
+          value={draftSearch}
+          onChange={(event) => setDraftSearch(event.target.value)}
+        />
+        <SearchButton
+          type="button"
+          onClick={() => setAppliedSearch(draftSearch)}
+        >
+          {I18N.SEARCH_BUTTON}
+        </SearchButton>
+      </FilterRow>
       {isPending && <Spinner />}
       {isError && <p>{I18N.SOMETHING_WENT_WRONG}</p>}
       {data && (
