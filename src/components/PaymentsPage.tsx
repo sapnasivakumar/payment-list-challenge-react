@@ -5,6 +5,7 @@ import { I18N } from "../constants/i18n";
 import { API_URL } from "../constants";
 import type { PaymentSearchResponse } from "../types/payment";
 import {
+  ClearButton,
   Container,
   FilterRow,
   SearchButton,
@@ -46,6 +47,13 @@ export const PaymentsPage = () => {
   const [draftSearch, setDraftSearch] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
 
+  const hasActiveFilters = appliedSearch !== "";
+
+  function clearFilters() {
+    setDraftSearch("");
+    setAppliedSearch("");
+  }
+
   const { data, isPending, isError } = useQuery({
     queryKey: [
       "payments",
@@ -71,6 +79,11 @@ export const PaymentsPage = () => {
         >
           {I18N.SEARCH_BUTTON}
         </SearchButton>
+        {hasActiveFilters && (
+          <ClearButton type="button" onClick={clearFilters}>
+            {I18N.CLEAR_FILTERS}
+          </ClearButton>
+        )}
       </FilterRow>
       {isPending && <Spinner />}
       {isError && <p>{I18N.SOMETHING_WENT_WRONG}</p>}
