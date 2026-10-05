@@ -7,6 +7,7 @@ import type { PaymentSearchResponse } from "../types/payment";
 import {
   ClearButton,
   Container,
+  ErrorBox,
   FilterRow,
   SearchButton,
   SearchInput,
@@ -37,10 +38,18 @@ async function fetchPayments(search: string): Promise<PaymentSearchResponse> {
   );
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch payments: ${response.statusText}`);
+    throw new Error(String(response.status));
   }
 
   return response.json();
+}
+
+function messageFor(error: unknown) {
+  const status = error instanceof Error ? error.message : "";
+  if (status === "404") {
+    return I18N.PAYMENT_NOT_FOUND;
+  }
+  return I18N.SOMETHING_WENT_WRONG;
 }
 
 export const PaymentsPage = () => {
@@ -54,7 +63,7 @@ export const PaymentsPage = () => {
     setAppliedSearch("");
   }
 
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isError, error } = useQuery({
     queryKey: [
       "payments",
       { search: appliedSearch, page: 1, pageSize: PAGE_SIZE },
@@ -86,7 +95,7 @@ export const PaymentsPage = () => {
         )}
       </FilterRow>
       {isPending && <Spinner />}
-      {isError && <p>{I18N.SOMETHING_WENT_WRONG}</p>}
+      {isError && <ErrorBox>{messageFor(error)}</ErrorBox>}
       {data && (
         <TableWrapper>
           <Table>
