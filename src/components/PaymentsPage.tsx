@@ -48,6 +48,8 @@ function messageFor(error: unknown) {
   const status = error instanceof Error ? error.message : "";
   if (status === "404") {
     return I18N.PAYMENT_NOT_FOUND;
+  } else if (status === "500") {
+    return I18N.INTERNAL_SERVER_ERROR;
   }
   return I18N.SOMETHING_WENT_WRONG;
 }
