@@ -157,8 +157,10 @@ export const StatusBadge = styled.span<{ status: string }>`
     props.status === "completed"
       ? `background-color: #d1fae5; color: #15803d;`
       : props.status === "pending"
-      ? `background-color: #fef3c7; color: #92400e;`
-      : `background-color: #fee2e2; color: #b91c1c;`}
+        ? `background-color: #fef3c7; color: #92400e;`
+        : props.status === "refunded"
+          ? `background-color: #e0e7ff; color: #3730a3;`
+          : `background-color: #fee2e2; color: #b91c1c;`}
 `;
 
 export const Spinner = styled.div`

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { format } from "date-fns";
 import { I18N } from "../constants/i18n";
@@ -68,12 +68,18 @@ export const PaymentsPage = () => {
   const [currency, setCurrency] = useState("");
   const [page, setPage] = useState(1);
 
-  const hasActiveFilters = appliedSearch !== "";
+  const hasActiveFilters = appliedSearch !== "" || currency !== "";
 
   function clearFilters() {
     setDraftSearch("");
     setAppliedSearch("");
     setCurrency("");
+    setPage(1);
+  }
+  function applySearch() {
+    const search = draftSearch.trim();
+    setDraftSearch(search);
+    setAppliedSearch(search);
     setPage(1);
   }
 
@@ -83,48 +89,49 @@ export const PaymentsPage = () => {
       { search: appliedSearch, currency, page, pageSize: PAGE_SIZE },
     ],
     queryFn: () => fetchPayments(appliedSearch, currency, page),
+    placeholderData: keepPreviousData,
   });
 
   return (
     <Container>
       <Title>{I18N.PAGE_TITLE}</Title>
-      <FilterRow>
-        <SearchInput
-          type="search"
-          aria-label={I18N.SEARCH_LABEL}
-          placeholder={I18N.SEARCH_PLACEHOLDER}
-          value={draftSearch}
-          onChange={(event) => setDraftSearch(event.target.value)}
-        />
-        <Select
-          aria-label={I18N.CURRENCY_FILTER_LABEL}
-          value={currency}
-          onChange={(event) => {
-            setCurrency(event.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">{I18N.CURRENCIES_OPTION}</option>
-          {CURRENCIES.map((code) => (
-            <option key={code} value={code}>
-              {code}
-            </option>
-          ))}
-        </Select>
-        <SearchButton
-          type="button"
-          onClick={() => {
-            (setAppliedSearch(draftSearch), setPage(1));
-          }}
-        >
-          {I18N.SEARCH_BUTTON}
-        </SearchButton>
-        {hasActiveFilters && (
-          <ClearButton type="button" onClick={clearFilters}>
-            {I18N.CLEAR_FILTERS}
-          </ClearButton>
-        )}
-      </FilterRow>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          applySearch();
+        }}
+      >
+        <FilterRow>
+          <SearchInput
+            type="search"
+            aria-label={I18N.SEARCH_LABEL}
+            placeholder={I18N.SEARCH_PLACEHOLDER}
+            value={draftSearch}
+            onChange={(event) => setDraftSearch(event.target.value)}
+          />
+          <Select
+            aria-label={I18N.CURRENCY_FILTER_LABEL}
+            value={currency}
+            onChange={(event) => {
+              setCurrency(event.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">{I18N.CURRENCIES_OPTION}</option>
+            {CURRENCIES.map((code) => (
+              <option key={code} value={code}>
+                {code}
+              </option>
+            ))}
+          </Select>
+          <SearchButton type="submit">{I18N.SEARCH_BUTTON}</SearchButton>
+          {hasActiveFilters && (
+            <ClearButton type="button" onClick={clearFilters}>
+              {I18N.CLEAR_FILTERS}
+            </ClearButton>
+          )}
+        </FilterRow>
+      </form>
       {isPending && <Spinner />}
       {isError && <ErrorBox>{messageFor(error)}</ErrorBox>}
       {data && (
