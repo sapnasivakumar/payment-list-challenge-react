@@ -9,6 +9,8 @@ import {
   Container,
   ErrorBox,
   FilterRow,
+  PaginationButton,
+  PaginationRow,
   SearchButton,
   SearchInput,
   Select,
@@ -30,11 +32,12 @@ const PAGE_SIZE = 5;
 async function fetchPayments(
   search: string,
   currency: string,
+  page: number,
 ): Promise<PaymentSearchResponse> {
   const params = new URLSearchParams({
     search,
     currency,
-    page: "1",
+    page: page.toString(),
     pageSize: PAGE_SIZE.toString(),
   });
 
@@ -63,6 +66,7 @@ export const PaymentsPage = () => {
   const [draftSearch, setDraftSearch] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
   const [currency, setCurrency] = useState("");
+  const [page, setPage] = useState(1);
 
   const hasActiveFilters = appliedSearch !== "";
 
@@ -70,14 +74,15 @@ export const PaymentsPage = () => {
     setDraftSearch("");
     setAppliedSearch("");
     setCurrency("");
+    setPage(1);
   }
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: [
       "payments",
-      { search: appliedSearch, currency, page: 1, pageSize: PAGE_SIZE },
+      { search: appliedSearch, currency, page, pageSize: PAGE_SIZE },
     ],
-    queryFn: () => fetchPayments(appliedSearch, currency),
+    queryFn: () => fetchPayments(appliedSearch, currency, page),
   });
 
   return (
@@ -94,7 +99,10 @@ export const PaymentsPage = () => {
         <Select
           aria-label={I18N.CURRENCY_FILTER_LABEL}
           value={currency}
-          onChange={(event) => setCurrency(event.target.value)}
+          onChange={(event) => {
+            setCurrency(event.target.value);
+            setPage(1);
+          }}
         >
           <option value="">{I18N.CURRENCIES_OPTION}</option>
           {CURRENCIES.map((code) => (
@@ -105,7 +113,9 @@ export const PaymentsPage = () => {
         </Select>
         <SearchButton
           type="button"
-          onClick={() => setAppliedSearch(draftSearch)}
+          onClick={() => {
+            (setAppliedSearch(draftSearch), setPage(1));
+          }}
         >
           {I18N.SEARCH_BUTTON}
         </SearchButton>
@@ -153,6 +163,25 @@ export const PaymentsPage = () => {
               ))}
             </TableBodyWrapper>
           </Table>
+          <PaginationRow>
+            <PaginationButton
+              type="button"
+              onClick={() => setPage((current) => current - 1)}
+              disabled={page === 1}
+            >
+              {I18N.PREVIOUS_BUTTON}
+            </PaginationButton>
+            <span>
+              {I18N.PAGE_LABEL} {page}
+            </span>
+            <PaginationButton
+              type="button"
+              onClick={() => setPage((current) => current + 1)}
+              disabled={page * PAGE_SIZE >= data.total}
+            >
+              {I18N.NEXT_BUTTON}
+            </PaginationButton>
+          </PaginationRow>
         </TableWrapper>
       )}
     </Container>
