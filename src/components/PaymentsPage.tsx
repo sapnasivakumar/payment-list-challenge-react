@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { format } from "date-fns";
 import { I18N } from "../constants/i18n";
-import { API_URL } from "../constants";
+import { API_URL, CURRENCIES } from "../constants";
 import type { PaymentSearchResponse } from "../types/payment";
 import {
   ClearButton,
@@ -11,6 +11,7 @@ import {
   FilterRow,
   SearchButton,
   SearchInput,
+  Select,
   Spinner,
   StatusBadge,
   Table,
@@ -26,9 +27,13 @@ import {
 
 const PAGE_SIZE = 5;
 
-async function fetchPayments(search: string): Promise<PaymentSearchResponse> {
+async function fetchPayments(
+  search: string,
+  currency: string,
+): Promise<PaymentSearchResponse> {
   const params = new URLSearchParams({
     search,
+    currency,
     page: "1",
     pageSize: PAGE_SIZE.toString(),
   });
@@ -57,20 +62,22 @@ function messageFor(error: unknown) {
 export const PaymentsPage = () => {
   const [draftSearch, setDraftSearch] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
+  const [currency, setCurrency] = useState("");
 
   const hasActiveFilters = appliedSearch !== "";
 
   function clearFilters() {
     setDraftSearch("");
     setAppliedSearch("");
+    setCurrency("");
   }
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: [
       "payments",
-      { search: appliedSearch, page: 1, pageSize: PAGE_SIZE },
+      { search: appliedSearch, currency, page: 1, pageSize: PAGE_SIZE },
     ],
-    queryFn: () => fetchPayments(appliedSearch),
+    queryFn: () => fetchPayments(appliedSearch, currency),
   });
 
   return (
@@ -84,6 +91,18 @@ export const PaymentsPage = () => {
           value={draftSearch}
           onChange={(event) => setDraftSearch(event.target.value)}
         />
+        <Select
+          aria-label={I18N.CURRENCY_FILTER_LABEL}
+          value={currency}
+          onChange={(event) => setCurrency(event.target.value)}
+        >
+          <option value="">{I18N.CURRENCIES_OPTION}</option>
+          {CURRENCIES.map((code) => (
+            <option key={code} value={code}>
+              {code}
+            </option>
+          ))}
+        </Select>
         <SearchButton
           type="button"
           onClick={() => setAppliedSearch(draftSearch)}
